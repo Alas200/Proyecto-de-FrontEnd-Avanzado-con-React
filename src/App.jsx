@@ -1,31 +1,28 @@
-import { useState } from "react";
 import { SendHorizontal } from "lucide-react";
 import { useForm } from "react-hook-form";
+import { useOllama } from "./hooks/useOllama";
+import { useChat } from "./context/ChatContext";
 
 export default function App() {
-  const [messages, setMessages] = useState([
-    { text: "¡Hola! Soy tu asistente de IA. ¿En qué puedo ayudarte hoy?", sender: "bot" }
-  ]);
+  const { state, dispatch } = useChat();
+  const { messages } = state;
 
-  // Configuramos React Hook Form para manejar el input del chat de forma eficiente
+  const { sendMessageToOllama, loading } = useOllama();
   const { register, handleSubmit, reset } = useForm();
 
-  const onSubmit = (data) => {
+  const onSubmit = async (data) => {
     const userMessage = data.message.trim();
-    if (!userMessage) return;
+    if (!userMessage || loading) return;
 
-    // Agregar mensaje del usuario
-    const newMessages = [...messages, { text: userMessage, sender: "user" }];
-    setMessages(newMessages);
+    // Agregar mensaje del usuario usando el reducer
+    dispatch({ type: 'ADD_MESSAGE', payload: { text: userMessage, sender: "user" } });
     reset();
 
-    // Simular respuesta del bot después de 1 segundo (como indica el README de referencia)
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        { text: "Esta es una respuesta simulada del modelo de IA.", sender: "bot" }
-      ]);
-    }, 1000);
+    // Obtener la respuesta real de Ollama
+    const botResponseText = await sendMessageToOllama(userMessage);
+
+    // Agregar la respuesta del bot usando el reducer
+    dispatch({ type: 'ADD_MESSAGE', payload: { text: botResponseText, sender: "bot" } });
   };
 
   return (
@@ -44,22 +41,29 @@ export default function App() {
             {msg.text}
           </div>
         ))}
+        {loading && (
+          <div className="bg-gray-800 self-start text-gray-400 px-4 py-2 rounded-lg border border-gray-700 italic">
+            Pensando...
+          </div>
+        )}
       </div>
 
-      {/* Formulario con React Hook Form y Tailwind */}
+      {/* Formulario */}
       <form
         onSubmit={handleSubmit(onSubmit)}
         className="p-4 bg-gray-950 border-t border-gray-800 flex gap-2 items-center"
       >
         <input
           type="text"
+          disabled={loading}
           {...register("message", { required: true })}
-          placeholder="Escribe tu mensaje aquí..."
-          className="flex-1 bg-gray-900 text-white px-4 py-2 rounded-lg border border-gray-700 focus:outline-none focus:border-blue-500"
+          placeholder={loading ? "Esperando respuesta de la IA..." : "Escribe tu mensaje aquí..."}
+          className="flex-1 bg-gray-900 text-white px-4 py-2 rounded-lg border border-gray-700 focus:outline-none focus:border-blue-500 disabled:opacity-50"
         />
         <button
           type="submit"
-          className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg transition-colors flex items-center justify-center cursor-pointer"
+          disabled={loading}
+          className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg transition-colors flex items-center justify-center cursor-pointer disabled:opacity-50"
         >
           <SendHorizontal size={20} />
         </button>
