@@ -1,6 +1,3 @@
-
-
-
 import { createContext, useContext, useReducer } from 'react';
 
 const ChatContext = createContext();
@@ -19,6 +16,11 @@ function chatReducer(state, action) {
       return {
         ...state,
         messages: [...state.messages, action.payload]
+      };
+    case 'SET_MESSAGES':
+      return {
+        ...state,
+        messages: action.payload
       };
     default:
       return state;

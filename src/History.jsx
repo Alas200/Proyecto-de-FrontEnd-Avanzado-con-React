@@ -1,11 +1,28 @@
 import { NewChatIcon } from "./assets/new-chat-icon.jsx";
+import { useChat } from "./context/ChatContext";
+
 export default function History() {
+  const { dispatch } = useChat();
+
+  const handleNewChat = () => {
+    // Reinicia los mensajes al estado inicial de un chat nuevo
+    dispatch({
+      type: 'SET_MESSAGES',
+      payload: [
+        { text: "¡Hola! Soy tu asistente de IA. ¿En qué puedo ayudarte hoy?", sender: "bot" }
+      ]
+    });
+  };
+
   return (
     <div className="flex flex-col h-screen w-64 bg-gray-900 text-white p-4 border-r border-gray-800">
       <div className="flex flex-col items-start">
         <span className="mb-4 font-bold text-lg">DevfSeek</span>
         <div className="p-1 mt-4 w-full">
-          <button className="flex items-center gap-2 p-2 bg-blue-600 hover:bg-blue-700 rounded-lg w-full transition-colors cursor-pointer text-sm">
+          <button 
+            onClick={handleNewChat}
+            className="flex items-center gap-2 p-2 bg-blue-600 hover:bg-blue-700 rounded-lg w-full transition-colors cursor-pointer text-sm"
+          >
             <NewChatIcon />
             Nuevo chat
           </button>
